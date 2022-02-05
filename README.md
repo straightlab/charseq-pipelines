@@ -12,15 +12,19 @@ Available notebooks (in progress)
   - `samtools` (https://www.htslib.org)
   - `bedtools` (https://bedtools.readthedocs.io/en/latest/)
   - `picardtools` (https://broadinstitute.github.io/picard/)
-  - `Bowtie2` :  the aligner used for aligning the DNA side of the reads
-  - `STAR` : the aligner used to align the RNA side of the reads 
-  - `Salmon` : used for probabilistic annotations of reads mapping to multiple isoforms.
+  - `Bowtie2` :  the aligner used for aligning the DNA side of the reads (http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml)
+  - `STAR` : the aligner used to align the RNA side of the reads (https://github.com/alexdobin/STAR)
+  - `Salmon` : transcript abundance quantifer used for probabilistic annotations of reads mapping to multiple isoforms (https://salmon.readthedocs.io/en/latest/salmon.html)
 
 - Other bioinformatics tools:
   - `pairix` : used to index and query the final pairs file (https://github.com/4dn-dcic/pairix)
-
+  - `clumpify.sh` : from the BBmap suite, used to remove duplicates (https://sourceforge.net/projects/bbmap/)
+  - `trimmomatic` : adapters trimming (http://www.usadellab.org/cms/?page=trimmomatic)
+  - `pear` : to merge read1 and read2 from paired-end sequencing (https://cme.h-its.org/exelixis/web/software/pear/doc.html)
+  - `snakemake` : our workflow management system (https://snakemake.readthedocs.io/en/stable/)
+ 
 - Programming languages:
-  - `julia 0.6` : the code to split the reads is written in Julia. This was written in the early days of Julia and the language has evolved since, so the older verison of Julia (0.6) is required. Refer to the installation of chartools to install the correct version of Julia.
+  - `julia 1.6 or 1.7` : the code to split the reads is written in Julia. Refer to the installation of chartools to install Julia and the required packahes.
   - `python >=v3.6` with the following packages: pandas, numpy, pysam, pyarrow, snakemake
 
 - ChAR-seq specific packages:
@@ -39,9 +43,9 @@ conda install pandas numpy pysam pyarrow snakemake
 # then the pip instructions to install tagtools and chartools
 ```
 
-Note that a lot of the bioinformatics tools above can also be installed through anaconda. In particular, pairix can be installed 
+Note that a lot of the bioinformatics tools above can also be installed through anaconda. In particular, pairix, bbmap, pear can be installed from the bioconda channel
 ```bash
-conda install -c bioconda pairix
+conda install -c bioconda pairix bbmap
 ```
 
 Bioconda channels may need to set up following instructions at `https://bioconda.github.io/user/install.html` (section 2, set up channels)
@@ -68,6 +72,8 @@ Important notes:
 - One should always execute the pipeline in dry-run mode first, using the `-n` snakemake option!
 - If the pipeline is ran on a cluster, it is ok to do dry runs on a login node. Of course however, once ready to fire up the pipeline, do not do so on a login node. Instead, either create a sbatch script or directly launch snakemake on an allocated compute node. 
 
+## Preparation of annotation files
+In order to run, the pipeline requires first creating annotation files for the genome of interest. These are used by tagtools to annote the reads with transcripts and gene names. The starting point to create these annotation files is a gff3 file for the genome of interest. Refer to xenopus_laevis example in the [notebooks](notebooks/xenopus_laevis) folder 
 
 ## Pipeline structures
 ### Basic pipeline
