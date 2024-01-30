@@ -1,30 +1,10 @@
 # === SAMPLES DEFINITION ===
-data_root: /oak/stanford/groups/astraigh/charseq2.0/data/novchar2/H202SC19102514/Rawdata
+data_root: /path/to/raw/fastqs
 samples:
-  TMF1_Rep2A_ES:
-    PE1: Rep2A_ES/Rep2A_ES_CKDL190141494-1a-AK903-GH07_HV3L5DSXX_L2_1.fq.gz
-    PE2: Rep2A_ES/Rep2A_ES_CKDL190141494-1a-AK903-GH07_HV3L5DSXX_L2_2.fq.gz
-    clip: /share/PI/astraigh/charseq2.0/resources/simple_clipping.fa
-  TMF2_Rep2B_ES:
-    PE1: Rep2B_ES/Rep2B_ES_CKDL190141494-1a-AK1846-AK2161_HV3L5DSXX_L2_1.fq.gz
-    PE2: Rep2B_ES/Rep2B_ES_CKDL190141494-1a-AK1846-AK2161_HV3L5DSXX_L2_2.fq.gz
-    clip: /share/PI/astraigh/charseq2.0/resources/simple_clipping.fa
-  TMF3_Rep2A_DE:
-    PE1: Rep2A_DE/Rep2A_DE_CKDL190141494-1a-AK1868-AK1852_HV3L5DSXX_L2_1.fq.gz
-    PE2: Rep2A_DE/Rep2A_DE_CKDL190141494-1a-AK1868-AK1852_HV3L5DSXX_L2_2.fq.gz
-    clip: /share/PI/astraigh/charseq2.0/resources/simple_clipping.fa
-  TMF4_K562_CON:
-    PE1: K562_con/K562_con_CKDL190141494-1a-7UDI302-AK1849_HV3L5DSXX_L2_1.fq.gz
-    PE2: K562_con/K562_con_CKDL190141494-1a-7UDI302-AK1849_HV3L5DSXX_L2_2.fq.gz
-    clip: /share/PI/astraigh/charseq2.0/resources/simple_clipping.fa
-  TMF5_K562_ERCC:
-    PE1: K562ERCC/K562ERCC_CKDL190141494-1a-7UDI223-AK2147_HV3L5DSXX_L2_1.fq.gz
-    PE2: K562ERCC/K562ERCC_CKDL190141494-1a-7UDI223-AK2147_HV3L5DSXX_L2_2.fq.gz
-    clip: /share/PI/astraigh/charseq2.0/resources/simple_clipping.fa
-  TMF6_K562_BRD:
-    PE1: K562_brd/K562_brd_CKDL190141494-1a-7UDI193-AK977_HV3L5DSXX_L2_1.fq.gz
-    PE2: K562_brd/K562_brd_CKDL190141494-1a-7UDI193-AK977_HV3L5DSXX_L2_2.fq.gz
-    clip: /share/PI/astraigh/charseq2.0/resources/simple_clipping.fa
+  TFONM2_ES:
+    PE1: hESCPacI/hESCPacI_USPD16100651-2_HL3LWDSXX_L3_1.fq.gz
+    PE2: hESCPacI/hESCPacI_USPD16100651-2_HL3LWDSXX_L3_2.fq.gz
+    clip: /path/to/charseq_resources/index_files/nebNEXT_ix2_clipping.fa
 
 bridgeF: AANNNAAACCGGCGTCCAAG #default bridgeF, overwritten by the sample specific definition if any
 bridgeR: CTTGGACGCCGGTTTNNNTT #default bridgeR, overwritten by the sample specific definition if any

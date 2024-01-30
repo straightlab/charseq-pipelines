@@ -6,7 +6,7 @@ import yaml
 # load the sample definition file if exists
 if 'samples_def_file' in config:
     with open(config['samples_def_file']) as file:
-        samples_config = yaml.load(file)
+        samples_config = yaml.safe_load(file)
         # print(samples_config)
         print("Loading samples definition from "+config['samples_def_file'])
 else:
@@ -45,8 +45,12 @@ OUTPUTS_DEFAULT=[
     expand('{sampleID}/pairs/{pairing_mode}/{pair_type}/filtered/DNAq15-blacklisted_RNAunq/{dnarna}.bed.gz', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, pair_type=['all'],dnarna=['dna','rna']),
     # expand('{sampleID}/pairs/gencondeV29_hg38/{type}/{rd}.bed.gz', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, type=PAIRING_TYPES, rd=['rna','dna']),
     expand('{sampleID}/alignments/{salmon_alignment_mode}/stats/gene_expression_salmon.parquet', sampleID=SAMPLESID,salmon_alignment_mode=['salmon_gencodeV29']),
-    expand('{sampleID}/alignments/rna/star_gencodeV29/noalign.stats.txt', sampleID=SAMPLESID)
-    expand('{sampleID}/pairs/{pairing_mode}/{pair_type}/filtered/DNAq15-blacklisted_RNAunq/{rd}.bed.gz.{strand}.bw', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, pair_type=['all','novel','intergenic','exons','introns'], rd=['rna','dna'], strand=["F","R","U"])
+    expand('{sampleID}/pairs/{pairing_mode}/{alignment_type}/filtered/cistrans_Q255-Q15/{dnarna}.{cistrans}.{splitOR5}.{strand}.bw', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, dnarna=['dna','rna'], alignment_type=['all','introns','exons','intergenic'], strand=['-rev','+'], splitOR5=['5','split'], cistrans=['cis','trans']),
+    expand('{sampleID}/pairs/{pairing_mode}/{alignment_type}/filtered/cistrans_Q255-Q15/{dnarna}.{cistrans}.{splitOR5}.{strand}.bw', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, dnarna=['rna'], alignment_type=['all','intergenic'], strand=['=','+','-rev'], splitOR5=['3'], cistrans=['cis','trans']),
+    expand('{sampleID}/pairs/{pairing_mode}/{alignment_type}/filtered/cistrans_Q255-Q15/{dnarna}.{cistrans}.{splitOR5}.{strand}.bw', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, dnarna=['rna','dna'], alignment_type=['all','intergenic'], strand=['+','-rev'], splitOR5=['3','split'], cistrans=['dnaambig']),
+    expand('{sampleID}/pairs/{pairing_mode}/{pair_type}/rd.simple.pairs',sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, pair_type=['exons','introns']),
+    expand('{sampleID}/alignments/rna/star_gencodeV29/noalign.stats.txt', sampleID=SAMPLESID),
+    # expand('{sampleID}/pairs/{pairing_mode}/{pair_type}/{rd}.bed.gz.{strand}.bw', sampleID=SAMPLESID, pairing_mode=PAIRING_MODES, pair_type=['all','novel','intergenic','exons','introns'], rd=['rna','dna'], strand=["F","R","U"])
     ]
 
 OUTPUTS=config.get("outputs",OUTPUTS_DEFAULT)
@@ -400,7 +404,7 @@ rule count_noalign:
         toomany='{sampleID}/alignments/rna/{rna_alignment_mode}/bytype/rna.toomany.bam'
     output: '{sampleID}/alignments/rna/{rna_alignment_mode}/noalign.stats.txt'
     shell: """
-x2=$(/home/groups/astraigh/software/samtools-1.10/bin/samtools view -c {input.unmapped});  x1=$(/home/groups/astraigh/software/samtools-1.10/bin/samtools view -c {input.toomany}); echo -e "toomany,unmapped\n${{x1}},${{x2}}\n" >{output}
+x2=$(samtools view -c {input.unmapped});  x1=$(samtools view -c {input.toomany}); echo -e "toomany,unmapped\n${{x1}},${{x2}}\n" >{output}
 """
 
 rule salmon_rna_bam:
@@ -457,6 +461,9 @@ rule merge_rna_bams:
             shell("rm "+ins+"_samsort.bam ")
 
 
+
+
+
 rule generate_pairs: 
     input: 
         rna= lambda wildcards: '{sampleID}/alignments/rna/{rna_alignment_mode}/{rna_bam}'.format(sampleID=wildcards.sampleID, rna_alignment_mode=config["pairing_modes"][wildcards.pairing_mode]['rna'], rna_bam=config["pairing_modes"][wildcards.pairing_mode]["alignment_types"][wildcards.alignment_type]),
@@ -485,10 +492,8 @@ rule split_cistrans:
         dna_trans='{sampleID}/pairs/{pairing_mode}/{alignment_type}/filtered/cistrans_Q255-Q15/dna.trans.bam',
         rna_ambig='{sampleID}/pairs/{pairing_mode}/{alignment_type}/filtered/cistrans_Q255-Q15/rna.ambiguous.bam',
         dna_ambig='{sampleID}/pairs/{pairing_mode}/{alignment_type}/filtered/cistrans_Q255-Q15/dna.ambiguous.bam'
-    params:
-         qfilter = config['DNA_Q_FILTER']
     shell: """
-chartools cistrans --rcis {output.rna_cis} --rtrans {output.rna_trans} --dcis {output.dna_cis} --dtrans {output.dna_trans} --rambig {output.rna_ambig} --dambig {output.dna_ambig} --qrna 255 --qdna {params.qfilter} {input.rna} {input.dna}
+chartools cistrans --rcis {output.rna_cis} --rtrans {output.rna_trans} --dcis {output.dna_cis} --dtrans {output.dna_trans} --rambig {output.rna_ambig} --dambig {output.dna_ambig} --qrna 255 --qdna 15 {input.rna} {input.dna}
 """
 
 
@@ -538,11 +543,10 @@ rule make_simple_pairs:
         dna='{sampleID}/pairs/{pairing_mode}/{alignment_type}/paired.dna.bam'
     output: '{sampleID}/pairs/{pairing_mode}/{alignment_type}/rd.simple.pairs'
     params:
-        chrNameLength=config['chromosomesFile'],
-        qfilter = config['DNA_Q_FILTER']
+        chrNameLength=config['chromosomesFile']
     threads: 1
     shell: """
-chartools pairup_simple {input.rna} {input.dna} {output} {params.chrNameLength} --qrna 255 --qdna {params.qfilter}
+chartools pairup_simple {input.rna} {input.dna} {output} {params.chrNameLength} --qrna 255 --qdna 15
 """
 
 
@@ -572,10 +576,9 @@ rule filter_blacklist_bed_dna: #Q15, blacklisted, $25==1, no unassigned chr scaf
     input:'{sampleID}/pairs/{pairing_mode}/{pair_type}/dna.bed.gz'
     output: '{sampleID}/pairs/{pairing_mode}/{pair_type}/filtered/DNAq15-blacklisted_RNAunq/dna.bed.gz'
     params: 
-        blacklist_bed=config['blacklist_bed'],
-        qfilter = config['DNA_Q_FILTER']
+        blacklist_bed=config['blacklist_bed']
     shell: """
-export LC_ALL=C; bedtools intersect -sorted -wa -v -a <(zcat {input} | awk -F $'\t' 'BEGIN{{OFS=FS}}($16==1 && $5>{params.qfilter})') -b {params.blacklist_bed} | bgzip -c > {output}; tabix -0 -f -p bed {output} 
+export LC_ALL=C; bedtools intersect -sorted -wa -v -a <(zcat {input} | awk -F $'\t' 'BEGIN{{OFS=FS}}($16==1 && $5>15)') -b {params.blacklist_bed} | bgzip -c > {output}; tabix -0 -f -p bed {output} 
     """
 
 #Dna print $4, $5, $5+1, $1, $9, $7, $2, $3, $3+1, $8, $6, $18, $19, $20, $21, $25, $26, same, flight;
@@ -595,20 +598,18 @@ rule gene_counts_table:
     input: '{sampleID}/pairs/{pairing_mode}/{pair_type}/rd.pairs'
     output: 
         complete='{sampleID}/pairs/{pairing_mode}/{pair_type}/stats/rnaTable.stats.txt',
-        simple='{sampleID}/pairs/{pairing_mode}/{pair_type}/stats/rnaTableSimple.stats.txt',
-        qfilter = config['DNA_Q_FILTER']
+        simple='{sampleID}/pairs/{pairing_mode}/{pair_type}/stats/rnaTableSimple.stats.txt'
     shell: """
-export LC_ALL=C; awk -F $'\t' 'BEGIN{{OFS=" "}}{{sure=-1;istrans=-1; if($25==1){{sure=1;}}else{{if ($22==1){{sure=0;}};}}; if(($9>{params.qfilter}) && (substr($2,3)==$4)){{istrans=0;}}else{{if($9>{params.qfilter}){{istrans=1;}};}}; {{print $18, sure, istrans;}}}}' {input} | tee >(sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.complete}) | cut -d " " -f1,1 |sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.simple}
+export LC_ALL=C; awk -F $'\t' 'BEGIN{{OFS=" "}}{{sure=-1;istrans=-1; if($25==1){{sure=1;}}else{{if ($22==1){{sure=0;}};}}; if(($9>15) && (substr($2,3)==$4)){{istrans=0;}}else{{if($9>15){{istrans=1;}};}}; {{print $18, sure, istrans;}}}}' {input} | tee >(sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.complete}) | cut -d " " -f1,1 |sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.simple}
 """
 
 rule gene_counts_table_fromDNA:
     input: '{sampleID}/pairs/{pairing_mode}/{pair_type}/{bed_folder}/dna.bed.gz'
     output: 
         complete='{sampleID}/pairs/{pairing_mode}/{pair_type}/{bed_folder}/stats/rnaTable.stats.txt',
-        simple='{sampleID}/pairs/{pairing_mode}/{pair_type}/{bed_folder}/stats/rnaTableSimple.stats.txt',
-        qfilter = config['DNA_Q_FILTER']
+        simple='{sampleID}/pairs/{pairing_mode}/{pair_type}/{bed_folder}/stats/rnaTableSimple.stats.txt'
     shell: """
-export LC_ALL=C; awk -F $'\t' 'BEGIN{{OFS=" "}}{{sure=-1;istrans=-1; if($25==1){{sure=1;}}else{{if ($22==1){{sure=0;}};}}; if(($9>{params.qfilter}) && (substr($2,3)==$4)){{istrans=0;}}else{{if($9>{params.qfilter}){{istrans=1;}};}}; {{print $18, sure, istrans;}}}}' {input} | tee >(sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.complete}) | cut -d " " -f1,1 |sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.simple}
+export LC_ALL=C; awk -F $'\t' 'BEGIN{{OFS=" "}}{{sure=-1;istrans=-1; if($25==1){{sure=1;}}else{{if ($22==1){{sure=0;}};}}; if(($9>15) && (substr($2,3)==$4)){{istrans=0;}}else{{if($9>15){{istrans=1;}};}}; {{print $18, sure, istrans;}}}}' {input} | tee >(sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.complete}) | cut -d " " -f1,1 |sort | uniq -c | sort -k1,1nr | sed -e 's/ *//' >{output.simple}
 """
 
 rule gene_counts_summary:
