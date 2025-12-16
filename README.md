@@ -18,6 +18,23 @@
 
 `pip install -e /path/to/tagtools/repo`
 
+## Download charseq resources
+
+Individual database and supplementary files called by the charseq pipeline can be downloaded separately. Two options are available
+
+Option 1: Download individual desired files from https://purl.stanford.edu/hc129rv3850
+
+Option 2: Use Globus Endpoint Download with an institutional Globus endpoint or a personal globus endpoint. (https://www.globus.org/).
+
+    a - Web access to the repository at (https://app.globus.org/file-manager?origin_id=0e3efb9a-ad98-425f-8b84-4247281c91f6&origin_path=%2Fsdr_access%2Fhc%2F129%2Frv%2F3850%2F)
+
+    b - Command Line Download of all resources:
+
+        `pip install globus-cli` OR `pipx install globus-cli`
+
+        `globus transfer --recursive efb4a78e-4d00-49da-8736-01b53e347f0b:/global/sdr_access/hc/129/rv/3850/ChAR-seq\ Resources/ "DESTINATION-ENDPOINT-UUID":"/path/to/charseq_resources"`
+
+
 ## Install additional dependencies in new directory /path/to/char_software
 
 - bbmap version 39.0
@@ -35,7 +52,7 @@
     - `export PATH=$PATH:/path/to/charseq-pipelines_repo/resources`
     - `export PATH=$PATH:/path/to/chartools_repo/Jchartools`
     - `export PATH=$PATH:/path/to/chartools_repo/scripts`
-
+    - `export PATH=$PATH:/path/to/charseq_resources`
 
 
 ## Load julia & add packages
